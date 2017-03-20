@@ -1,6 +1,7 @@
 package com.ringcentral.gatling.mongo.action
 
 import com.ringcentral.gatling.mongo.command.MongoRemoveCommand
+import com.ringcentral.gatling.mongo.response.{MongoCountResponse, MongoStringResponse}
 import io.gatling.commons.stats.{KO, OK}
 import io.gatling.commons.util.TimeHelper.nowMillis
 import io.gatling.commons.validation.Validation
@@ -28,17 +29,19 @@ class MongoRemoveCommandAction(command: MongoRemoveCommand, database: DefaultDB,
     selector <- string2JsObject(resolvedSelector)
   } yield {
     val collection: JSONCollection = database.collection[JSONCollection](collectionName)
-    val startTime = nowMillis
+    val sent = nowMillis
     collection.remove(selector).onComplete {
       case Success(result) => {
-        val endTime = nowMillis
-        statsEngine.logResponse(session, commandName, ResponseTimings(startTime, endTime), OK, None, None)
-        next ! session
+        val received = nowMillis
+        if(result.ok) {
+          processResult(session, sent, received, command.checks, MongoCountResponse(result.n), next, commandName)
+        } else {
+          executeNext(session, sent, received, KO, next, commandName, Some(result.writeErrors.map(we => s"[${we.code}] ${we.errmsg}").mkString(", ")))
+        }
       }
-      case Failure(message) => {
-        val endTime = nowMillis
-        statsEngine.logResponse(session, commandName, ResponseTimings(startTime, endTime), KO, None, Some(message.getMessage))
-        next ! session
+      case Failure(err) => {
+        val received = nowMillis
+        executeNext(session, sent, received, KO, next, commandName, Some(err.getMessage))
       }
     }
 

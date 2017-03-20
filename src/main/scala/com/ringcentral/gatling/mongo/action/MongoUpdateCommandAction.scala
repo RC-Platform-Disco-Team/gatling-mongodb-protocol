@@ -1,6 +1,7 @@
 package com.ringcentral.gatling.mongo.action
 
 import com.ringcentral.gatling.mongo.command.MongoUpdateCommand
+import com.ringcentral.gatling.mongo.response.MongoCountResponse
 import io.gatling.commons.stats.{KO, OK, Status}
 import io.gatling.commons.util.TimeHelper.nowMillis
 import io.gatling.commons.validation.Validation
@@ -8,7 +9,6 @@ import io.gatling.core.action.Action
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.{Expression, Session}
 import io.gatling.core.stats.StatsEngine
-import io.gatling.core.stats.message.ResponseTimings
 import reactivemongo.api.DefaultDB
 import reactivemongo.play.json.ImplicitBSONHandlers._
 import reactivemongo.play.json.collection.JSONCollection
@@ -30,20 +30,19 @@ class MongoUpdateCommandAction(command: MongoUpdateCommand, database: DefaultDB,
     modifier <- string2JsObject(resolvedModifier)
   } yield {
     val collection: JSONCollection = database.collection[JSONCollection](collectionName)
-    val startTime = nowMillis
+    val sent = nowMillis
     collection.update(selector, modifier).onComplete {
       case Success(result) => {
-        val endTime = nowMillis
-        val status: Status = if (result.ok) OK else KO
-        val messageBuilder: StringBuilder = new StringBuilder()
-        result.writeErrors.foreach(we => messageBuilder.append(s"[${we.code}] ${we.errmsg}"))
-        statsEngine.logResponse(session, commandName, ResponseTimings(startTime, endTime), status, Option(result.code).map(_.toString), Some(messageBuilder.toString()))
-        next ! session
+        val received = nowMillis
+        if(result.ok) {
+          processResult(session, sent, received, command.checks, MongoCountResponse(result.n), next, commandName)
+        } else {
+          executeNext(session, sent, received, KO, next, commandName, Some(result.writeErrors.map(we => s"[${we.code}] ${we.errmsg}").mkString(", ")))
+        }
       }
       case Failure(err) => {
-        val endTime = nowMillis
-        statsEngine.logResponse(session, commandName, ResponseTimings(startTime, endTime), KO, None, Some(err.getMessage))
-        next ! session
+        val received = nowMillis
+        executeNext(session, sent, received, KO, next, commandName, Some(err.getMessage))
       }
     }
 
