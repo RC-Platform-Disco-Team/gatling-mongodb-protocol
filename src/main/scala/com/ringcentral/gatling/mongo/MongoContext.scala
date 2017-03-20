@@ -7,7 +7,7 @@ import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
 import scala.concurrent.Await
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 trait MongoContext {
   def database: DefaultDB
@@ -33,7 +33,10 @@ object MongoContext extends StrictLogging {
 
     val connection: MongoConnection = driver.connection(mongoUri)
     val database = mongoUri.db match {
-      case Some(dbName) => Await.result(connection.database(dbName), connectionTimeout)
+      case Some(dbName) => Try(Await.result(connection.database(dbName), connectionTimeout)) match {
+        case Success(db) => db
+        case Failure(err) => throw new IllegalStateException(s"Can't connect to database $uri. $err")
+      }
       case None => throw new IllegalStateException(s"Can't connect to database $uri.")
     }
     new MongoDatabaseContext(database)
