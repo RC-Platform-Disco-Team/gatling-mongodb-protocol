@@ -1,7 +1,7 @@
 package com.ringcentral.gatling.mongo.action
 
 import com.ringcentral.gatling.mongo.command.MongoRawCommand
-import com.ringcentral.gatling.mongo.response.{MongoResponse, MongoStringResponse}
+import com.ringcentral.gatling.mongo.response.MongoStringResponse
 import io.gatling.commons.stats.KO
 import io.gatling.commons.util.TimeHelper.nowMillis
 import io.gatling.commons.validation.Validation
@@ -10,10 +10,10 @@ import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.{Expression, Session}
 import io.gatling.core.stats.StatsEngine
 import play.api.libs.json.JsObject
-import reactivemongo.api.{DefaultDB, FailoverStrategy, ReadPreference}
 import reactivemongo.api.commands.Command
-import reactivemongo.play.json.JSONSerializationPack
+import reactivemongo.api.{DefaultDB, FailoverStrategy, ReadPreference}
 import reactivemongo.play.json.ImplicitBSONHandlers._
+import reactivemongo.play.json.JSONSerializationPack
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}

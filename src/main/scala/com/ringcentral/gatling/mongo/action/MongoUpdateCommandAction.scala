@@ -2,7 +2,7 @@ package com.ringcentral.gatling.mongo.action
 
 import com.ringcentral.gatling.mongo.command.MongoUpdateCommand
 import com.ringcentral.gatling.mongo.response.MongoCountResponse
-import io.gatling.commons.stats.{KO, OK, Status}
+import io.gatling.commons.stats.KO
 import io.gatling.commons.util.TimeHelper.nowMillis
 import io.gatling.commons.validation.Validation
 import io.gatling.core.action.Action
