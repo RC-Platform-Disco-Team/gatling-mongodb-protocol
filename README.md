@@ -1,6 +1,8 @@
 # gatling-mongodb-protocol
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ed9bf4ecb69f446986170dedebf582b9)](https://www.codacy.com/app/mskonovalov/gatling-mongodb-protocol?utm_source=github.com&utm_medium=referral&utm_content=RC-Platform-Disco-Team/gatling-mongodb-protocol&utm_campaign=badger)
+[![Codacy Badge][codacy img]][codacy]
+[![Codacy Badge]])
+[![License][license img]][license]
 
 MongoDB protocol for Gatling
 
@@ -50,3 +52,8 @@ val mongoProtocol = mongo
   .password("pass")
   .database("database")
 ```
+
+[codacy]:https://www.codacy.com/app/mskonovalov/gatling-mongodb-protocol?utm_source=github.com&utm_medium=referral&utm_content=RC-Platform-Disco-Team/gatling-mongodb-protocol&utm_campaign=badger
+[codacy img]:https://api.codacy.com/project/badge/Grade/ed9bf4ecb69f446986170dedebf582b9
+[license]:LICENSE
+[license img]:https://img.shields.io/badge/License-MIT-blue.svg
