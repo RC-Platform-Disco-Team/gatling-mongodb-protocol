@@ -1,7 +1,6 @@
 # gatling-mongodb-protocol
 
 [![Codacy Badge][codacy img]][codacy]
-[![Codacy Badge]])
 [![License][license img]][license]
 
 MongoDB protocol for Gatling
