@@ -6,7 +6,6 @@ import scala.concurrent.duration._
 class MongoSimulation extends Simulation {
   private val mongoProtocol = mongo
     .uri("mongodb://admin:admin@localhost:27017/messages?rm.tcpNoDelay=true")
-    .nbChannelsPerNode(50)
 
   val scn = scenario("Insert document scenario")
     .exec(mongo("count before").collection("messages").count.check(count.greaterThan(6163515).saveAs("messages_count")))
