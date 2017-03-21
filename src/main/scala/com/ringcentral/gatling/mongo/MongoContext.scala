@@ -19,26 +19,17 @@ object MongoContext extends StrictLogging {
 
   private val driver = new MongoDriver
 
-  def apply(uri: String, connectionTimeout: FiniteDuration, nbChannelsPerNode: Option[Int]): MongoContext = {
-    val mongoUri: ParsedURI = MongoConnection.parseURI(uri) match {
-      case Success(parsedUri) =>
-        logger.debug(s"Successful parsed mongo uri '$uri'.")
-        val connectionOptions = nbChannelsPerNode match {
-          case Some(channelsPerNode) => parsedUri.options.copy(nbChannelsPerNode = channelsPerNode)
-          case None => parsedUri.options
-        }
-        parsedUri.copy(options = connectionOptions)
-      case Failure(err) => throw new IllegalStateException(s"Can't parse database uri. $err")
-    }
+  def apply(uri: ParsedURI, connectionTimeout: FiniteDuration): MongoContext = {
+    val connection: MongoConnection = driver.connection(uri)
 
-    val connection: MongoConnection = driver.connection(mongoUri)
-    val database = mongoUri.db match {
+    val database = uri.db match {
       case Some(dbName) => Try(Await.result(connection.database(dbName), connectionTimeout)) match {
         case Success(db) => db
-        case Failure(err) => throw new IllegalStateException(s"Can't connect to database $uri. $err")
+        case Failure(err) =>
+          throw new IllegalStateException(s"Can't connect to database ${uri.hosts.map(item=>s"${item._1}:${item._2}").mkString(", ")}. $err")
       }
       case None => throw new IllegalStateException(s"Can't connect to database $uri.")
     }
-    new MongoDatabaseContext(database)
+    MongoDatabaseContext(database)
   }
 }
