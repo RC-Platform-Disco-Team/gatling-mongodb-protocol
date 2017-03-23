@@ -3,13 +3,10 @@ package com.ringcentral.gatling.mongo.command
 import com.ringcentral.gatling.mongo.check.MongoCheck
 import io.gatling.core.session.Expression
 
-abstract class MongoCommand(var checks: List[MongoCheck] = Nil) {
-
-}
-
-case class MongoRawCommand(commandName: Expression[String], command: Expression[String]) extends MongoCommand
-case class MongoCountCommand(commandName: Expression[String], collection: Expression[String]) extends MongoCommand
-case class MongoInsertCommand(commandName: Expression[String], collection: Expression[String], document: Expression[String]) extends MongoCommand
-case class MongoRemoveCommand(commandName: Expression[String], collection: Expression[String], selector: Expression[String]) extends MongoCommand
-case class MongoFindCommand(commandName: Expression[String], collection: Expression[String], query: Expression[String], limit: Int = 50) extends MongoCommand
-case class MongoUpdateCommand(commandName: Expression[String], collection: Expression[String], selector: Expression[String], modifier: Expression[String]) extends MongoCommand
+abstract class MongoCommand(checks: List[MongoCheck])
+case class MongoRawCommand(commandName: Expression[String], command: Expression[String], checks: List[MongoCheck] = Nil) extends MongoCommand(checks)
+case class MongoCountCommand(commandName: Expression[String], collection: Expression[String], selector: Option[Expression[String]] = None, limit: Int = 50, skip: Int = 50, hint: Option[Expression[String]] = None, checks: List[MongoCheck] = Nil) extends MongoCommand(checks)
+case class MongoInsertCommand(commandName: Expression[String], collection: Expression[String], document: Expression[String], checks: List[MongoCheck] = Nil) extends MongoCommand(checks)
+case class MongoRemoveCommand(commandName: Expression[String], collection: Expression[String], selector: Expression[String], checks: List[MongoCheck] = Nil) extends MongoCommand(checks)
+case class MongoFindCommand(commandName: Expression[String], collection: Expression[String], query: Expression[String], limit: Int = 50, checks: List[MongoCheck] = Nil) extends MongoCommand(checks)
+case class MongoUpdateCommand(commandName: Expression[String], collection: Expression[String], selector: Expression[String], modifier: Expression[String], checks: List[MongoCheck] = Nil) extends MongoCommand(checks)

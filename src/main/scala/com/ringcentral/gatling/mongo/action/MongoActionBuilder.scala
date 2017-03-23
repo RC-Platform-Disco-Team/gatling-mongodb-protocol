@@ -8,17 +8,10 @@ import io.gatling.core.action.builder.ActionBuilder
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.structure.ScenarioContext
 
-abstract class MongoActionBuilder extends ActionBuilder {
+class MongoActionBuilder(command: MongoCommand, configuration: GatlingConfiguration) extends ActionBuilder {
+
   protected def mongoComponents(ctx: ScenarioContext): MongoComponents = {
     ctx.protocolComponentsRegistry.components(MongoProtocol.MongoProtocolKey)
-  }
-}
-
-case class MongoCommandActionBuilder(command: MongoCommand, configuration: GatlingConfiguration) extends MongoActionBuilder {
-
-  def check(checks: MongoCheck*): MongoCommandActionBuilder = {
-    command.checks = checks.toList
-    this
   }
 
   override def build(ctx: ScenarioContext, next: Action): Action = {
@@ -36,4 +29,3 @@ case class MongoCommandActionBuilder(command: MongoCommand, configuration: Gatli
 
   }
 }
-

@@ -15,7 +15,7 @@ val mongoProtocol = mongo
   .uri("mongodb://username:password@host:port/database")
 ```
 
-* hosts - Array of string in format: "host:port"
+* hosts: Array of string in format: "host:port"
 * authSource: The database source for authentication credentials.
 * authMode: The authentication mode. By default set to scram-sha1 for SCRAM-SHA-1. Can be configured with mongocr for the backward compatible MONGODB-CR.
 * connectTimeoutMS: The number of milliseconds to wait for a connection to be established before giving up.
@@ -52,6 +52,36 @@ val mongoProtocol = mongo
   .database("database")
 ```
 
+### Mongo scenario definition
+
+#### Execute custom command
+
+* command: the json string with raw mongo command
+
+> For more information see [the MongoDB command api](http://reactivemongo.org/releases/0.12/documentation/advanced-topics/commands.html)
+
+> all parameters support [Expression](http://gatling.io/docs/2.2.0/session/expression_el.html)
+
+Example:
+```scala
+val scn = scenario("Mongo scenario")
+    .exec(mongo("Custom command").command.execute("{\"aggregate\": \"collection\", \"pipeline\": [{\"$match\": {\"_field\": \"value\"}}]}"))
+```
+
+#### Execute count command
+
+* selector: the json string with mongo filter
+* limit   : the maximum number of matching documents to count
+* skip    : the number of matching documents to skip before counting
+* hint    : the index to use (either the index name or the index document)
+
+> all parameters support [Expression](http://gatling.io/docs/2.2.0/session/expression_el.html)
+
+Example:
+```scala
+val scn = scenario("Mongo scenario")
+    .exec(mongo("Custom command").command.execute("{\"aggregate\": \"collection\", \"pipeline\": [{\"$match\": {\"_field\": \"value\"}}]}"))
+```
 [codacy]:https://www.codacy.com/app/mskonovalov/gatling-mongodb-protocol?utm_source=github.com&utm_medium=referral&utm_content=RC-Platform-Disco-Team/gatling-mongodb-protocol&utm_campaign=badger
 [codacy img]:https://api.codacy.com/project/badge/Grade/ed9bf4ecb69f446986170dedebf582b9
 [license]:LICENSE
