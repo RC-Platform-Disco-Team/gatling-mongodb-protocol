@@ -33,11 +33,9 @@ class MongoCountCommandAction(command: MongoCountCommand, database: DefaultDB, v
   } yield {
     val collection: JSONCollection = database.collection[JSONCollection](collectionName)
     val sent = nowMillis
-    logger.info(s"$commandName limit ${command.limit} ${command.checks}")
     collection.count(selector, command.limit, command.skip, hint).onComplete {
       case Success(result) => {
         val received = nowMillis
-        logger.info(s"$commandName result: $result")
         processResult(session, sent, received, command.checks, MongoCountResponse(result), next, commandName)
       }
       case Failure(err) => {

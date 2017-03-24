@@ -1,6 +1,5 @@
 package com.ringcentral.gatling.mongo.command
 
-import com.ringcentral.gatling.mongo.action.MongoActionBuilder
 import com.ringcentral.gatling.mongo.check.MongoCheck
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.Expression
@@ -13,7 +12,7 @@ case class MongoDslBuilderBase(private val commandName: Expression[String]) {
 }
 
 case class MongoCommandDslBuilder(private val commandName: Expression[String], private val configuration: GatlingConfiguration) {
-  def execute(command: Expression[String]) = new MongoActionBuilder(MongoRawCommand(commandName, command), configuration)
+  def execute(command: Expression[String]) = MongoRawCommandDslBuilder(commandName, command, configuration)
 }
 
 case class MongoCollectionDslBuilder(
@@ -26,9 +25,9 @@ case class MongoCollectionDslBuilder(
 
   def find(query: Expression[String]) = MongoCollectionFindCommandDslBuilder(commandName, collection, configuration, query)
 
-  def remove(selector: Expression[String]) = new MongoActionBuilder(MongoRemoveCommand(commandName, collection, selector), configuration)
-  def insert(document: Expression[String]) = new MongoActionBuilder(MongoInsertCommand(commandName, collection, document), configuration)
-  def update(selector: Expression[String], modifier: Expression[String]) = new MongoActionBuilder(MongoUpdateCommand(commandName, collection, selector, modifier), configuration)
+  def remove(selector: Expression[String]) = MongoRemoveCommandDslBuilder(commandName, collection, selector, configuration)
+  def insert(document: Expression[String]) = MongoInsertCommandDslBuilder(commandName, collection, document, configuration)
+  def update(selector: Expression[String], modifier: Expression[String]) = MongoUpdateCommandDslBuilder(commandName, collection, selector, modifier, configuration)
 }
 
 trait MongoCommandBuilder {
@@ -40,6 +39,50 @@ trait MongoCommandBuilder {
   }
 
   def build():MongoCommand
+}
+
+case class MongoRawCommandDslBuilder(
+  private val commandName: Expression[String],
+  private val command: Expression[String],
+  private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+
+  def build():MongoCommand = {
+    MongoRawCommand(commandName, command, checks)
+  }
+}
+
+case class MongoInsertCommandDslBuilder(
+  private val commandName: Expression[String],
+  private val collection: Expression[String],
+  private val document: Expression[String],
+  private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+
+  def build():MongoCommand = {
+    MongoInsertCommand(commandName, collection,document, checks)
+  }
+}
+
+case class MongoRemoveCommandDslBuilder(
+  private val commandName: Expression[String],
+  private val collection: Expression[String],
+  private val selector: Expression[String],
+  private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+
+  def build():MongoCommand = {
+    MongoRemoveCommand(commandName, collection, selector, checks)
+  }
+}
+
+case class MongoUpdateCommandDslBuilder(
+ private val commandName: Expression[String],
+ private val collection: Expression[String],
+ private val selector: Expression[String],
+ private val modifier: Expression[String],
+ private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+
+  def build():MongoCommand = {
+    MongoUpdateCommand(commandName, collection, selector, modifier, checks)
+  }
 }
 
 case class MongoCollectionCountCommandDslBuilder(
