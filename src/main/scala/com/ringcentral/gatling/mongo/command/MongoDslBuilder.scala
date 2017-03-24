@@ -4,6 +4,7 @@ import com.ringcentral.gatling.mongo.check.MongoCheck
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.Expression
 import com.softwaremill.quicklens._
+import reactivemongo.api.ReadPreference
 
 case class MongoDslBuilderBase(private val commandName: Expression[String]) {
   def command(implicit configuration: GatlingConfiguration) = MongoCommandDslBuilder(commandName, configuration)
@@ -32,6 +33,7 @@ case class MongoCollectionDslBuilder(
 
 trait MongoCommandBuilder {
   protected var checks: List[MongoCheck] = Nil
+  protected var readPreference: ReadPreference = ReadPreference.primary
 
   def check(checks: MongoCheck*): MongoCommandBuilder = {
     this.checks = checks.toList
