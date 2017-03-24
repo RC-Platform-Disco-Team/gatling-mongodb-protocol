@@ -11,8 +11,10 @@ import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.{Expression, Session, resolveOptionalExpression}
 import io.gatling.core.stats.StatsEngine
 import play.api.libs.json.JsObject
+import reactivemongo.api.collections.GenericQueryBuilder
 import reactivemongo.api.{DefaultDB, QueryOpts, ReadPreference}
 import reactivemongo.play.json.ImplicitBSONHandlers._
+import reactivemongo.play.json.JSONSerializationPack
 import reactivemongo.play.json.collection.JsCursor._
 import reactivemongo.play.json.collection.JSONCollection
 
@@ -30,20 +32,22 @@ class MongoFindCommandAction(command: MongoFindCommand, database: DefaultDB, val
     resolvedFilter <- command.query(session)
     filter <- string2JsObject(resolvedFilter)
     resolvedHint <- resolveOptionalExpression(command.hint, session)
+    hint <- string2JsObject(resolvedHint)
+    resolvedSort <- resolveOptionalExpression(command.sort, session)
+    sort <- string2JsObject(resolvedSort)
+
   } yield {
     val collection: JSONCollection = database.collection[JSONCollection](collectionName)
     var queryBuilder = collection.find(filter).options(QueryOpts().batchSize(command.limit))
-    queryBuilder = resolvedHint match {
-      case Some(hintString) => {
-        string2JsObject(hintString) match {
-          case validation.Success(hint) => queryBuilder.hint(hint)
-          case validation.Failure(err) => {
-            executeNext(session, nowMillis, nowMillis, KO, next, commandName, Some(err))
-            queryBuilder
-          }
-        }
-      }
-      case None => queryBuilder
+
+    queryBuilder = sort match {
+      case Some(document) => queryBuilder.sort(document)
+      case _              => queryBuilder
+    }
+
+    queryBuilder = hint match {
+      case Some(document) => queryBuilder.hint(document)
+      case _              => queryBuilder
     }
 
     val sent = nowMillis

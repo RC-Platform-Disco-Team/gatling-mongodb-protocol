@@ -4,7 +4,7 @@ import com.ringcentral.gatling.mongo.check.MongoCheck
 import com.ringcentral.gatling.mongo.response.MongoResponse
 import io.gatling.commons.stats.{KO, OK, Status}
 import io.gatling.commons.validation
-import io.gatling.commons.validation.Validation
+import io.gatling.commons.validation.{NoneSuccess, Validation}
 import io.gatling.core.action.{Action, ExitableAction}
 import io.gatling.core.check.Check
 import io.gatling.core.session.{Expression, Session}
@@ -32,6 +32,13 @@ abstract class MongoAction(database: DefaultDB) extends ExitableAction with Mong
       case Success(json) => validation.SuccessWrapper(json).success
       case Failure(err) =>
         validation.FailureWrapper(err.getMessage).failure
+    }
+  }
+
+  def string2JsObject(optionString: Option[String]): Validation[Option[JsObject]] = {
+    optionString match {
+      case Some(string) => string2JsObject(string).map(Some.apply)
+      case None => NoneSuccess
     }
   }
 

@@ -113,13 +113,16 @@ case class MongoCollectionFindCommandDslBuilder(
   private val configuration: GatlingConfiguration,
   private val query: Expression[String],
   private val limit: Int = 0,
+  private val sort: Option[Expression[String]] = None,
   private val hint: Option[Expression[String]] = None) extends MongoCommandBuilder {
+
+  def sort(sort: Expression[String]): MongoCollectionFindCommandDslBuilder = this.modify(_.sort).setTo(Some(sort))
 
   def hint(hint: Expression[String]): MongoCollectionFindCommandDslBuilder = this.modify(_.hint).setTo(Some(hint))
 
   def limit(limit: Int): MongoCollectionFindCommandDslBuilder = this.modify(_.limit).setTo(limit)
 
   def build():MongoCommand = {
-    MongoFindCommand(commandName, collection, query, limit, hint, checks)
+    MongoFindCommand(commandName, collection, query, limit, sort, hint, checks)
   }
 }
