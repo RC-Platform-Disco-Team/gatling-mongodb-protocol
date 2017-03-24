@@ -70,6 +70,7 @@ val scn = scenario("Mongo scenario")
 
 #### Execute count command
 
+* selector: the collection name
 * selector: the json string with mongo filter
 * limit   : the maximum number of matching documents to count
 * skip    : the number of matching documents to skip before counting
@@ -80,9 +81,8 @@ val scn = scenario("Mongo scenario")
 Example:
 ```scala
 val scn = scenario("Mongo scenario")
-    .exec(mongo("Custom command").command.execute("{\"aggregate\": \"collection\", \"pipeline\": [{\"$match\": {\"_field\": \"value\"}}]}"))
-```
-[codacy]:https://www.codacy.com/app/mskonovalov/gatling-mongodb-protocol?utm_source=github.com&utm_medium=referral&utm_content=RC-Platform-Disco-Team/gatling-mongodb-protocol&utm_campaign=badger
+    .exec(mongo("count before").collection("messages").count().skip(5).limit(7).hint("{\"_id\": -1}"))
+```[codacy]:https://www.codacy.com/app/mskonovalov/gatling-mongodb-protocol?utm_source=github.com&utm_medium=referral&utm_content=RC-Platform-Disco-Team/gatling-mongodb-protocol&utm_campaign=badger
 [codacy img]:https://api.codacy.com/project/badge/Grade/ed9bf4ecb69f446986170dedebf582b9
 [license]:LICENSE
 [license img]:https://img.shields.io/badge/License-MIT-blue.svg
