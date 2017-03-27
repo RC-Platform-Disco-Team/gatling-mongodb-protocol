@@ -32,11 +32,17 @@ case class MongoCollectionDslBuilder(
 }
 
 trait MongoCommandBuilder {
-  protected var checks: List[MongoCheck] = Nil
+
   protected var readPreference: ReadPreference = ReadPreference.primary
+  protected var checks: List[MongoCheck] = Nil
 
   def check(checks: MongoCheck*): MongoCommandBuilder = {
     this.checks = checks.toList
+    this
+  }
+
+  def readPreference(readPreference: ReadPreference): MongoCommandBuilder = {
+    this.readPreference = readPreference
     this
   }
 

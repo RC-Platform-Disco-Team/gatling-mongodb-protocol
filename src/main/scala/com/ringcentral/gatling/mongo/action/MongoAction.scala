@@ -31,7 +31,7 @@ abstract class MongoAction(database: DefaultDB) extends ExitableAction with Mong
     Try[JsObject](Json.parse(string).as[JsObject]) match {
       case Success(json) => validation.SuccessWrapper(json).success
       case Failure(err) =>
-        validation.FailureWrapper(err.getMessage).failure
+        validation.FailureWrapper(s"Error parse JSON string: $string. ${err.getMessage}").failure
     }
   }
 

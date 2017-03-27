@@ -38,16 +38,14 @@ class MongoFindCommandAction(command: MongoFindCommand, database: DefaultDB, val
 
   } yield {
     val collection: JSONCollection = database.collection[JSONCollection](collectionName)
-    var queryBuilder = collection.find(filter).options(QueryOpts().batchSize(command.limit))
 
-    queryBuilder = sort match {
-      case Some(document) => queryBuilder.sort(document)
-      case _              => queryBuilder
-    }
+//    var queryBuilder = collection.find(filter).options(QueryOpts().batchSize(command.limit))
 
-    queryBuilder = hint match {
-      case Some(document) => queryBuilder.hint(document)
-      case _              => queryBuilder
+    val queryBuilder = (sort, hint) match {
+      case (Some(sortDocument), Some(hintDocument)) => collection.find(filter).options(QueryOpts().batchSize(command.limit)).sort(sortDocument).hint(hintDocument)
+      case (Some(document), None)                   => collection.find(filter).options(QueryOpts().batchSize(command.limit)).sort(document)
+      case (None, Some(document))                   => collection.find(filter).options(QueryOpts().batchSize(command.limit)).hint(document)
+      case _                                        => collection.find(filter).options(QueryOpts().batchSize(command.limit))
     }
 
     val sent = nowMillis

@@ -10,16 +10,16 @@ class MongoSimulation extends Simulation {
   val scn = scenario("Mongo scenario")
     .exec(mongo("count before").collection("messages").count().skip(5).limit(7).hint("{\"_id\": -1}").check(count.greaterThan(1).saveAs("messages_count")))
     .exec(mongo("custom command").command.execute("{\"aggregate\": \"messages\", \"pipeline\": [{\"$match\": {\"_acc\": \"1\"}}]}").check(jsonPath("$.ok").is("1")))
-    .exec(mongo("find all").collection("messages").find("{}").check(jsonPath("$.._id").find.saveAs("_id")))
-    .exec(mongo("find specific").collection("messages").find("{\"_id\": \"${_id}\"}").check(jsonPath("$.._id").find.is("${_id}")))
+    .exec(mongo("find all").collection("messages").find("{}").sort("{\"_id\": 1}").check(jsonPath("$.._id").find.saveAs("_id")))
+    .exec(mongo("find specific").collection("messages").find("{\"_id\": ${_id}}").check(jsonPath("$.._id").find.is("${_id}")))
     .exec(mongo("insert").collection("messages").insert("{\"_acc\": \"1\"}"))
-    .exec(mongo("update specific").collection("messages").update("{\"_id\": \"${_id}\"}", "{\"messages_count\": \"${messages_count}\"}"))
-    .exec(mongo("remove specific").collection("messages").remove("{\"_id\": \"${_id}\"}"))
-    .exec(mongo("count after").collection("messages").count().check(count.greaterThan(6163515)))
+    .exec(mongo("update specific").collection("messages").update("{\"_id\": ${_id}}", "{\"messages_count\": \"${messages_count}\"}"))
+    .exec(mongo("remove specific").collection("messages").remove("{\"_id\": ${_id}}"))
+    .exec(mongo("count after").collection("messages").count().check(count.greaterThan(1)))
 
   setUp(
     scn.inject(
-      atOnceUsers(1)
+      atOnceUsers(10)
     )
   ).protocols(mongoProtocol)
 

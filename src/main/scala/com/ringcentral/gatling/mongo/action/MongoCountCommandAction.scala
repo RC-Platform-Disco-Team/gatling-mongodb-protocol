@@ -7,8 +7,7 @@ import io.gatling.commons.util.TimeHelper.nowMillis
 import io.gatling.commons.validation._
 import io.gatling.core.action.Action
 import io.gatling.core.config.GatlingConfiguration
-import io.gatling.core.session.{Expression, Session}
-import io.gatling.core.session._
+import io.gatling.core.session.{Expression, Session, _}
 import io.gatling.core.stats.StatsEngine
 import reactivemongo.api.DefaultDB
 import reactivemongo.play.json.collection.JSONCollection

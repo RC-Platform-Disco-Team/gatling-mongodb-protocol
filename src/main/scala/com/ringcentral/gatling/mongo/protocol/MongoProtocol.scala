@@ -2,7 +2,6 @@ package com.ringcentral.gatling.mongo.protocol
 
 import akka.actor.ActorSystem
 import com.ringcentral.gatling.mongo.MongoContext
-import com.ringcentral.gatling.mongo.MongoContext.logger
 import com.typesafe.scalalogging.StrictLogging
 import io.gatling.core.CoreComponents
 import io.gatling.core.config.GatlingConfiguration
@@ -12,13 +11,11 @@ import reactivemongo.api.commands.WriteConcern
 import reactivemongo.api._
 import reactivemongo.core.nodeset.Authenticate
 
-import scala.concurrent.duration._
-import scala.concurrent.duration.FiniteDuration
-import scala.util.control.NonFatal
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.{FiniteDuration, _}
+import scala.util.{Failure, Success, Try}
 
 object MongoProtocol {
-  val MongoProtocolKey = new ProtocolKey {
+  val mongoProtocolKey = new ProtocolKey {
     type Protocol = MongoProtocol
     type Components = MongoComponents
 
@@ -37,7 +34,7 @@ object MongoProtocol {
 case class MongoProtocol(uri: ParsedURI, connectionTimeout: FiniteDuration) extends Protocol
 
 case object MongoProtocolBuilderBase {
-  val DefaultPort = 27017
+  val defaultPort = 27017
 
   def uri(uri: String) = MongoProtocolUriBuilder(uri)
 
@@ -46,16 +43,11 @@ case object MongoProtocolBuilderBase {
   private def parseHosts(hosts: String) = hosts.split(",").toList.map { host =>
     host.split(':').toList match {
       case host :: port :: Nil => host -> {
-        try {
-          val p = port.toInt
-          if (p > 0 && p < 65536) p
-          else throw new URIParsingException(s"Could not parse hosts '$hosts' from URI: invalid port '$port'")
-        } catch {
-          case _: NumberFormatException => throw new URIParsingException(s"Could not parse hosts '$hosts' from URI: invalid port '$port'")
-          case NonFatal(e)              => throw e
-        }
+        val p = Try(port.toInt) getOrElse(throw new URIParsingException(s"Could not parse hosts '$hosts' from URI: invalid port '$port'"))
+        if (p > 0 && p < 65536) p
+        else throw new URIParsingException(s"Could not parse hosts '$hosts' from URI: invalid port '$port'")
       }
-      case host :: Nil => host -> DefaultPort
+      case host :: Nil => host -> defaultPort
       case _           => throw new URIParsingException(s"Could not parse hosts from URI: invalid definition '$hosts'")
     }
   }

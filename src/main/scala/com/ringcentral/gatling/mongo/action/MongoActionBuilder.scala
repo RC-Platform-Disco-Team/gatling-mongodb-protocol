@@ -1,6 +1,5 @@
 package com.ringcentral.gatling.mongo.action
 
-import com.ringcentral.gatling.mongo.check.MongoCheck
 import com.ringcentral.gatling.mongo.command._
 import com.ringcentral.gatling.mongo.protocol.{MongoComponents, MongoProtocol}
 import io.gatling.core.action.Action
@@ -11,7 +10,7 @@ import io.gatling.core.structure.ScenarioContext
 class MongoActionBuilder(command: MongoCommand, configuration: GatlingConfiguration) extends ActionBuilder {
 
   protected def mongoComponents(ctx: ScenarioContext): MongoComponents = {
-    ctx.protocolComponentsRegistry.components(MongoProtocol.MongoProtocolKey)
+    ctx.protocolComponentsRegistry.components(MongoProtocol.mongoProtocolKey)
   }
 
   override def build(ctx: ScenarioContext, next: Action): Action = {
