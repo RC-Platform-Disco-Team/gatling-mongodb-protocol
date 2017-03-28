@@ -16,9 +16,10 @@ import scala.util.{Failure, Success, Try}
 
 object MongoFeederSource {
 
+  val defaultPostProcessor: JsObject => Map[String, Any] = o => o.fields.toMap
   private val driver = new MongoDriver
 
-  def apply(url: String, collectionName: String, query: String, limit: Int, batchSize: Int, connectionTimeout: FiniteDuration, receiveTimeout: FiniteDuration): Vector[Record[Any]] = {
+  def apply(url: String, collectionName: String, query: String, limit: Int, batchSize: Int, connectionTimeout: FiniteDuration, receiveTimeout: FiniteDuration, postProcessor: JsObject => Map[String, Any]): Vector[Record[Any]] = {
 
     val uri: ParsedURI = MongoConnection.parseURI(url) match {
       case Success(parsedUri) => parsedUri
@@ -36,7 +37,7 @@ object MongoFeederSource {
     }
     val document = Json.parse(query).as[JsObject]
     val collection: JSONCollection = database.collection[JSONCollection](collectionName)
-    val resultSet: Enumerator[Map[String, Any]] = collection.find(document).options(QueryOpts().batchSize(batchSize)).cursor[JsObject](ReadPreference.primary).enumerator(limit).map(jsObj => jsObj.fields.toMap)
+    val resultSet: Enumerator[Map[String, Any]] = collection.find(document).options(QueryOpts().batchSize(batchSize)).cursor[JsObject](ReadPreference.primary).enumerator(limit).map(postProcessor)
 
     Await.result(resultSet.run(Iteratee.fold(Vector.empty[Record[Any]]) { (acc, next) => acc :+ next }), receiveTimeout)
   }
