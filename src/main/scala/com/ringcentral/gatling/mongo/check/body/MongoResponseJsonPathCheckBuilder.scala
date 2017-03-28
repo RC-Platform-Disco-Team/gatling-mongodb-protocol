@@ -4,10 +4,10 @@ import com.ringcentral.gatling.mongo.check.{MongoCheck, MongoCheckBuilders}
 import com.ringcentral.gatling.mongo.response.{MongoResponse, MongoStringResponse}
 import io.gatling.core.check.{DefaultMultipleFindCheckBuilder, Preparer}
 import io.gatling.commons.validation._
+import io.gatling.core.check.extractor.{CountArity, CriterionExtractor, FindAllArity, FindArity}
 import io.gatling.core.check.extractor.jsonpath.{JsonFilter, JsonPathExtractorFactory}
 import io.gatling.core.json.JsonParsers
 import io.gatling.core.session.Expression
-
 
 trait MongoResponseJsonPathOfType {
   self: MongoResponseJsonPathCheckBuilder[String] =>
@@ -36,9 +36,9 @@ class MongoResponseJsonPathCheckBuilder[X: JsonFilter](
 
   import extractorFactory._
 
-  def findExtractor(occurrence: Int) = path.map(newSingleExtractor[X](_, occurrence))
+  def findExtractor(occurrence: Int): Expression[CriterionExtractor[Any, String, X] with FindArity] = path.map(newSingleExtractor[X](_, occurrence))
 
-  def findAllExtractor = path.map(newMultipleExtractor[X])
+  def findAllExtractor: Expression[CriterionExtractor[Any, String, Seq[X]] with FindAllArity] = path.map(newMultipleExtractor[X])
 
-  def countExtractor = path.map(newCountExtractor)
+  def countExtractor: Expression[CriterionExtractor[Any, String, Int] with CountArity] = path.map(newCountExtractor)
 }
