@@ -19,11 +19,11 @@ class MongoActionBuilder(command: MongoCommand, configuration: GatlingConfigurat
     val databaseContext = components.mongoContext
     command match {
       case rawCommand: MongoRawCommand => new MongoRawCommandAction(rawCommand, databaseContext.database, statsEngine, configuration, next)
-      case countCommand: MongoCountCommand => new MongoCountCommandAction(countCommand, databaseContext.database, statsEngine, configuration, next)
-      case findCommand: MongoFindCommand => new MongoFindCommandAction(findCommand, databaseContext.database, statsEngine, configuration, next)
-      case removeCommand: MongoRemoveCommand => new MongoRemoveCommandAction(removeCommand, databaseContext.database, statsEngine, configuration, next)
-      case insertCommand: MongoInsertCommand => new MongoInsertCommandAction(insertCommand, databaseContext.database, statsEngine, configuration, next)
-      case updateCommand: MongoUpdateCommand => new MongoUpdateCommandAction(updateCommand, databaseContext.database, statsEngine, configuration, next)
+      case countCommand: MongoCountCommand => new MongoCountAction(countCommand, databaseContext.database, statsEngine, configuration, next)
+      case findCommand: MongoFindCommand => new MongoFindAction(findCommand, databaseContext.database, statsEngine, configuration, next)
+      case removeCommand: MongoRemoveCommand => new MongoRemoveAction(removeCommand, databaseContext.database, statsEngine, configuration, next)
+      case insertCommand: MongoInsertCommand => new MongoInsertAction(insertCommand, databaseContext.database, statsEngine, configuration, next)
+      case updateCommand: MongoUpdateCommand => new MongoUpdateAction(updateCommand, databaseContext.database, statsEngine, configuration, next)
     }
 
   }

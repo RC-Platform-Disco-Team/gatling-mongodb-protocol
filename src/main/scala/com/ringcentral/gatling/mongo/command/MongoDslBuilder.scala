@@ -1,11 +1,9 @@
 package com.ringcentral.gatling.mongo.command
 
 import com.ringcentral.gatling.mongo.check.MongoCheck
-import com.softwaremill.quicklens._
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.Expression
 import reactivemongo.api.ReadPreference
-
 
 //TODO remove configuration
 //TODO remove Expression
