@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % "2.5.10" % "compile",
   "org.reactivemongo" %% "reactivemongo" % "0.12.1" % "compile",
   "org.reactivemongo" %% "reactivemongo-play-json" % "0.12.1" % "compile",
+  "org.reactivemongo" %% "reactivemongo-iteratees" % "0.12.1" % "compile",
   "io.gatling.highcharts" % "gatling-charts-highcharts" % "2.2.0" % "test"
 )
     
