@@ -29,7 +29,8 @@ class MongoRawCommandAction(command: MongoRawCommand, database: DefaultDB, val s
     commandDocument <- string2JsObject(commandText)
   } yield {
     val sent = nowMillis
-    Command.run(JSONSerializationPack, FailoverStrategy.default).apply(database, Command.run(JSONSerializationPack, FailoverStrategy.default).rawCommand(commandDocument)).one[JsObject](ReadPreference.primaryPreferred).onComplete {
+    val runner = Command.run(JSONSerializationPack, FailoverStrategy.default)
+    runner.apply(database, runner.rawCommand(commandDocument)).one[JsObject](ReadPreference.primaryPreferred).onComplete {
       case Success(result) => processResult(session, sent, nowMillis, command.checks, MongoStringResponse(result.toString()), next, commandName)
       case Failure(err) => executeNext(session, sent, nowMillis, KO, next, commandName, Some(err.getMessage))
     }

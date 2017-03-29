@@ -12,10 +12,6 @@ trait MongoCheckSupport {
 
   val count: DefaultFindCheckBuilder[MongoCheck, MongoResponse, MongoResponse, Int] = MongoCountCheckBuilder.count
 
-  def jsonPath(path: Expression[String])
-              (implicit extractorFactory: JsonPathExtractorFactory,
-                                         jsonParsers: JsonParsers
-  ): MongoResponseJsonPathCheckBuilder[String]
-    with MongoResponseJsonPathOfType =
+  def jsonPath(path: Expression[String])(implicit extractorFactory: JsonPathExtractorFactory, jsonParsers: JsonParsers): MongoResponseJsonPathCheckBuilder[String] with MongoResponseJsonPathOfType =
     MongoResponseJsonPathCheckBuilder.jsonPath(path)
 }

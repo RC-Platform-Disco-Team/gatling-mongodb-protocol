@@ -9,10 +9,10 @@ import io.gatling.core.action.Action
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.{Expression, Session, _}
 import io.gatling.core.stats.StatsEngine
-import play.api.libs.json.JsObject
 import reactivemongo.api.DefaultDB
 import reactivemongo.play.json.collection.JSONCollection
 
+//TODO remove global context everywhere
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
@@ -27,10 +27,14 @@ class MongoCountAction(command: MongoCountCommand, database: DefaultDB, val stat
       collectionName <- command.collection(session)
       selectorDocument <- resolveOptionalExpression(command.selector, session)
       hint <- resolveOptionalExpression(command.hint, session)
-      selector: Option[JsObject] <- selectorDocument.getOrElse(NoneSuccess)
+      selector <- selectorDocument match {
+        case Some(d) => string2JsObject(d).map(Some.apply)
+        case None => NoneSuccess
+      }
     } yield {
       val sent = nowMillis
-      database.collection[JSONCollection](collectionName).count(selector, command.limit, command.skip, hint).onComplete {
+      val collection: JSONCollection = database.collection[JSONCollection](collectionName)
+      collection.count(selector, command.limit, command.skip, hint).onComplete {
         case Success(result) => processResult(session, sent, nowMillis, command.checks, MongoCountResponse(result), next, commandName)
         case Failure(err) => executeNext(session, sent, nowMillis, KO, next, commandName, Some(err.getMessage))
       }
