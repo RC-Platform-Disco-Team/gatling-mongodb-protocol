@@ -16,12 +16,15 @@ import scala.concurrent.duration.{FiniteDuration, _}
 trait MongoDsl extends MongoCheckSupport {
 
   def mongo(implicit configuration: GatlingConfiguration) = MongoProtocol
+
   def mongo(requestName: Expression[String])(implicit configuration: GatlingConfiguration) = new MongoDslBuilder(requestName, configuration)
 
-  def mongoFeeder(url: String, collection: String, query: String, limit: Int = 100, batchSize: Int = 0, connectionTimeout: FiniteDuration = 5 seconds, receiveTimeout: FiniteDuration = 30 seconds, postProcessor: JsObject => Map[String, Any] = MongoFeederSource.defaultPostProcessor): RecordSeqFeederBuilder[Any] =
+  def mongoFeeder(url: String, collection: String, query: String, limit: Int = 100, batchSize: Int = 0, connectionTimeout: FiniteDuration = 5 seconds,
+                  receiveTimeout: FiniteDuration = 30 seconds, postProcessor: JsObject => Map[String, Any] = MongoFeederSource.defaultPostProcessor): RecordSeqFeederBuilder[Any] =
     RecordSeqFeederBuilder(MongoFeederSource(url, collection, query, limit, batchSize, connectionTimeout, receiveTimeout, postProcessor))
 
   implicit def mongoProtocolUriBuilder2mongoProtocol(builder: MongoProtocolUriBuilder): MongoProtocol = builder.build()
+
   implicit def mongoProtocolBuilder2mongoProtocol(builder: MongoProtocolFieldsBuilder): MongoProtocol = builder.build()
 
   implicit def mongoCommandBuilder2ActionBuilder(commandBuilder: MongoCommandBuilder)(implicit configuration: GatlingConfiguration): ActionBuilder = {

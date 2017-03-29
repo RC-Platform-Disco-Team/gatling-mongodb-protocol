@@ -7,19 +7,20 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
 
-// fixme dirty hack
+// fixme remove global context
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object MongoUtils {
 
   private val DEFAULT_PORT: Int = 27017
+  private lazy val mongoDriver = new MongoDriver()
 
   private def establishConnection(uri: ParsedURI, dbName: String, connectionTimeout: FiniteDuration): DefaultDB = {
     Await.result(establishConnection(uri, dbName), connectionTimeout)
   }
 
   private def establishConnection(uri: ParsedURI, dbName: String): Future[DefaultDB] =
-    Try(new MongoDriver().connection(uri).database(dbName))
+    Try(mongoDriver.connection(uri).database(dbName))
     match {
       case Success(db) => db
       case Failure(err) =>
