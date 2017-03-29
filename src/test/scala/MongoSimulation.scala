@@ -5,9 +5,12 @@ import scala.concurrent.duration._
 
 class MongoSimulation extends Simulation {
   private val mongoProtocol = mongo
-    .uri("mongodb://admin:admin@localhost:27017/messages?rm.tcpNoDelay=true&rm.nbChannelsPerNode=1")
+    .uri("mongodb://admin:admin@localhost:27017/messages?rm.tcpNoDelay=true&rm.nbChannelsPerNode=10")
+
+  val feeder = mongoFeeder("mongodb://admin:admin@localhost:27017/messages?rm.tcpNoDelay=true&rm.nbChannelsPerNode=10", "messages", "{}", limit=100000)
 
   val scn = scenario("Mongo scenario")
+      .feed(feeder)
     .exec(mongo("count before").collection("messages").count().skip(5).limit(7).hint("{\"_id\": -1}").check(count.greaterThan(1).saveAs("messages_count")))
     .exec(mongo("custom command").command.execute("{\"aggregate\": \"messages\", \"pipeline\": [{\"$match\": {\"_acc\": \"1\"}}]}").check(jsonPath("$.ok").is("1")))
     .exec(mongo("find all").collection("messages").find("{}").sort("{\"_id\": 1}").check(jsonPath("$.._id").find.saveAs("_id")))
@@ -19,7 +22,7 @@ class MongoSimulation extends Simulation {
 
   setUp(
     scn.inject(
-      atOnceUsers(10)
+      atOnceUsers(1)
     )
   ).protocols(mongoProtocol)
 
