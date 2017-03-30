@@ -3,32 +3,30 @@ package com.ringcentral.gatling.mongo.command
 import com.ringcentral.gatling.mongo.check.MongoCheck
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.Expression
-import com.softwaremill.quicklens._
 import reactivemongo.api.ReadPreference
 
-case class MongoDslBuilderBase(private val commandName: Expression[String]) {
-  def command(implicit configuration: GatlingConfiguration) = MongoCommandDslBuilder(commandName, configuration)
+//TODO remove Expression
+class MongoDslBuilder(private val commandName: Expression[String], implicit private val configuration: GatlingConfiguration) {
 
-  def collection(collectionName: Expression[String])(implicit configuration: GatlingConfiguration) = MongoCollectionDslBuilder(commandName, collectionName, configuration)
+  def execute(command: Expression[String]) = MongoRawCommandBuilder(commandName, command)
+
+  def collection(collectionName: Expression[String]) = new MongoCollectionDslBuilder(commandName, collectionName)
 }
 
-case class MongoCommandDslBuilder(private val commandName: Expression[String], private val configuration: GatlingConfiguration) {
-  def execute(command: Expression[String]) = MongoRawCommandDslBuilder(commandName, command, configuration)
-}
+class MongoCollectionDslBuilder(private val commandName: Expression[String],
+                                private val collection: Expression[String]) {
 
-case class MongoCollectionDslBuilder(
-  private val commandName: Expression[String],
-  private val collection: Expression[String],
-  private val configuration: GatlingConfiguration) {
+  def count() = MongoCountCommandBuilder(commandName, collection)
 
-  def count() = MongoCollectionCountCommandDslBuilder(commandName, collection, configuration)
-  def count(selector: Expression[String]) = MongoCollectionCountCommandDslBuilder(commandName, collection, configuration, Some(selector))
+  def count(selector: Expression[String]) = MongoCountCommandBuilder(commandName, collection, Some(selector))
 
-  def find(query: Expression[String]) = MongoCollectionFindCommandDslBuilder(commandName, collection, configuration, query)
+  def find(query: Expression[String]) = MongoFindCommandBuilder(commandName, collection, query)
 
-  def remove(selector: Expression[String]) = MongoRemoveCommandDslBuilder(commandName, collection, selector, configuration)
-  def insert(document: Expression[String]) = MongoInsertCommandDslBuilder(commandName, collection, document, configuration)
-  def update(selector: Expression[String], modifier: Expression[String]) = MongoUpdateCommandDslBuilder(commandName, collection, selector, modifier, configuration)
+  def remove(selector: Expression[String]) = MongoRemoveCommandBuilder(commandName, collection, selector)
+
+  def insert(document: Expression[String]) = MongoInsertCommandBuilder(commandName, collection, document)
+
+  def update(selector: Expression[String], modifier: Expression[String]) = MongoUpdateCommandBuilder(commandName, collection, selector, modifier)
 }
 
 trait MongoCommandBuilder {
@@ -46,89 +44,68 @@ trait MongoCommandBuilder {
     this
   }
 
-  def build():MongoCommand
+  def build(): MongoCommand
 }
 
-case class MongoRawCommandDslBuilder(
-  private val commandName: Expression[String],
-  private val command: Expression[String],
-  private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+case class MongoRawCommandBuilder(private val commandName: Expression[String],
+                                  private val command: Expression[String]) extends MongoCommandBuilder {
 
-  def build():MongoCommand = {
-    MongoRawCommand(commandName, command, checks)
-  }
+  def build(): MongoCommand = MongoRawCommand(commandName, command, checks)
 }
 
-case class MongoInsertCommandDslBuilder(
-  private val commandName: Expression[String],
-  private val collection: Expression[String],
-  private val document: Expression[String],
-  private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+case class MongoInsertCommandBuilder(private val commandName: Expression[String],
+                                     private val collection: Expression[String],
+                                     private val document: Expression[String]) extends MongoCommandBuilder {
 
-  def build():MongoCommand = {
-    MongoInsertCommand(commandName, collection,document, checks)
-  }
+  def build(): MongoCommand = MongoInsertCommand(commandName, collection, document, checks)
 }
 
-case class MongoRemoveCommandDslBuilder(
-  private val commandName: Expression[String],
-  private val collection: Expression[String],
-  private val selector: Expression[String],
-  private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+case class MongoRemoveCommandBuilder(private val commandName: Expression[String],
+                                     private val collection: Expression[String],
+                                     private val selector: Expression[String]) extends MongoCommandBuilder {
 
-  def build():MongoCommand = {
-    MongoRemoveCommand(commandName, collection, selector, checks)
-  }
+  def build(): MongoCommand = MongoRemoveCommand(commandName, collection, selector, checks)
 }
 
-case class MongoUpdateCommandDslBuilder(
- private val commandName: Expression[String],
- private val collection: Expression[String],
- private val selector: Expression[String],
- private val modifier: Expression[String],
- private val configuration: GatlingConfiguration) extends MongoCommandBuilder {
+case class MongoUpdateCommandBuilder(private val commandName: Expression[String],
+                                     private val collection: Expression[String],
+                                     private val selector: Expression[String],
+                                     private val modifier: Expression[String]) extends MongoCommandBuilder {
 
-  def build():MongoCommand = {
-    MongoUpdateCommand(commandName, collection, selector, modifier, checks)
-  }
+  def build(): MongoCommand = MongoUpdateCommand(commandName, collection, selector, modifier, checks)
 }
 
-case class MongoCollectionCountCommandDslBuilder(
-  private val commandName: Expression[String],
-  private val collection: Expression[String],
-  private val configuration: GatlingConfiguration,
-  private val selector: Option[Expression[String]] = None,
-  private val limit: Int = 0,
-  private val skip: Int = 0,
-  private val hint: Option[Expression[String]] = None) extends MongoCommandBuilder {
+case class MongoCountCommandBuilder(private val commandName: Expression[String],
+                                    private val collection: Expression[String],
+                                    private val selector: Option[Expression[String]] = None,
+                                    private val limit: Int = 0,
+                                    private val skip: Int = 0,
+                                    private val hint: Option[Expression[String]] = None) extends MongoCommandBuilder {
 
-  def hint(hint: Expression[String]): MongoCollectionCountCommandDslBuilder = this.modify(_.hint).setTo(Some(hint))
+  def hint(hint: Expression[String]): MongoCountCommandBuilder = copy(hint = Some(hint))
 
-  def limit(limit: Int): MongoCollectionCountCommandDslBuilder = this.modify(_.limit).setTo(limit)
+  def limit(limit: Int): MongoCountCommandBuilder = copy(limit = limit)
 
-  def skip(skip: Int): MongoCollectionCountCommandDslBuilder = this.modify(_.skip).setTo(skip)
+  def skip(skip: Int): MongoCountCommandBuilder = copy(skip = skip)
 
-  def build():MongoCommand = {
-    MongoCountCommand(commandName, collection, selector, limit, skip, hint, checks)
-  }
+  def build(): MongoCommand = MongoCountCommand(commandName, collection, selector, limit, skip, checks, hint)
 }
 
-case class MongoCollectionFindCommandDslBuilder(
-  private val commandName: Expression[String],
-  private val collection: Expression[String],
-  private val configuration: GatlingConfiguration,
-  private val query: Expression[String],
-  private val limit: Int = 0,
-  private val sort: Option[Expression[String]] = None,
-  private val hint: Option[Expression[String]] = None) extends MongoCommandBuilder {
+case class MongoFindCommandBuilder(private val commandName: Expression[String],
+                                   private val collection: Expression[String],
+                                   private val query: Expression[String],
+                                   private val limit: Int = 0,
+                                   private val skip: Int = 0,
+                                   private val sort: Option[Expression[String]] = None,
+                                   private val hint: Option[Expression[String]] = None) extends MongoCommandBuilder {
 
-  def sort(sort: Expression[String]): MongoCollectionFindCommandDslBuilder = this.modify(_.sort).setTo(Some(sort))
+  def sort(sort: Expression[String]): MongoFindCommandBuilder = copy(sort = Some(sort))
 
-  def hint(hint: Expression[String]): MongoCollectionFindCommandDslBuilder = this.modify(_.hint).setTo(Some(hint))
+  def hint(hint: Expression[String]): MongoFindCommandBuilder = copy(hint = Some(hint))
 
-  def limit(limit: Int): MongoCollectionFindCommandDslBuilder = this.modify(_.limit).setTo(limit)
+  def limit(limit: Int): MongoFindCommandBuilder = copy(limit = limit)
 
-  def build():MongoCommand = {
-    MongoFindCommand(commandName, collection, query, limit, sort, hint, checks)
-  }
+  def skip(skip: Int): MongoFindCommandBuilder = copy(skip = skip)
+
+  def build(): MongoCommand = MongoFindCommand(commandName, collection, query, limit, sort, checks, hint)
 }

@@ -16,7 +16,7 @@ import reactivemongo.play.json.collection.JSONCollection
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
-class MongoUpdateCommandAction(command: MongoUpdateCommand, database: DefaultDB, val statsEngine: StatsEngine, configuration: GatlingConfiguration, val next: Action) extends MongoAction(database) {
+class MongoUpdateAction(command: MongoUpdateCommand, database: DefaultDB, val statsEngine: StatsEngine, configuration: GatlingConfiguration, val next: Action) extends MongoAction(database) {
 
   override def name: String = genName("Mongo update command")
 
@@ -29,21 +29,16 @@ class MongoUpdateCommandAction(command: MongoUpdateCommand, database: DefaultDB,
     selector <- string2JsObject(resolvedSelector)
     modifier <- string2JsObject(resolvedModifier)
   } yield {
-    val collection: JSONCollection = database.collection[JSONCollection](collectionName)
     val sent = nowMillis
-    collection.update(selector, modifier).onComplete {
-      case Success(result) => {
-        val received = nowMillis
-        if(result.ok) {
-          processResult(session, sent, received, command.checks, MongoCountResponse(result.n), next, commandName)
+    database.collection[JSONCollection](collectionName).update(selector, modifier).onComplete {
+      case Success(result) =>
+        if (result.ok) {
+          processResult(session, sent, nowMillis, command.checks, MongoCountResponse(result.n), next, commandName)
         } else {
-          executeNext(session, sent, received, KO, next, commandName, Some(result.writeErrors.map(we => s"[${we.code}] ${we.errmsg}").mkString(", ")))
+          executeNext(session, sent, nowMillis, KO, next, commandName, Some(result.writeErrors.map(we => s"[${we.code}] ${we.errmsg}").mkString(", ")))
         }
-      }
-      case Failure(err) => {
-        val received = nowMillis
-        executeNext(session, sent, received, KO, next, commandName, Some(err.getMessage))
-      }
+      case Failure(err) =>
+        executeNext(session, sent, nowMillis, KO, next, commandName, Some(err.getMessage))
     }
 
   }

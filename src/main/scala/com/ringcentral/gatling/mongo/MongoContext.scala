@@ -1,35 +1,32 @@
 package com.ringcentral.gatling.mongo
 
-import com.typesafe.scalalogging.StrictLogging
 import reactivemongo.api.MongoConnection.ParsedURI
-import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
+import reactivemongo.api.{DefaultDB, MongoDriver}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
 
-trait MongoContext {
-  def database: DefaultDB
-}
+/**
+  * Context class with MongoDB connection
+  *
+  * @param database instance of connected MongoDB
+  */
+case class MongoContext(database: DefaultDB)
 
-object MongoContext extends StrictLogging {
+/**
+  * Factory object for MongoDB context from uri
+  */
+object MongoContext {
 
-  case class MongoDatabaseContext(database: DefaultDB) extends MongoContext
+  /**
+    * Try to parse URI and establish connection. In case of failure or timeout throws [[IllegalStateException]]
+    *
+    * @param uri connection string to MongoDB
+    * @param connectionTimeout timeout value
+    * @return context with connected [[DefaultDB]] instance inside
+    */
+  def apply(uri: ParsedURI, connectionTimeout: FiniteDuration): MongoContext = MongoContext(MongoUtils.connectToDB(uri, connectionTimeout))
 
-  private val driver = new MongoDriver
-
-  def apply(uri: ParsedURI, connectionTimeout: FiniteDuration): MongoContext = {
-    val connection: MongoConnection = driver.connection(uri)
-
-    val database = uri.db match {
-      case Some(dbName) => Try(Await.result(connection.database(dbName), connectionTimeout)) match {
-        case Success(db) => db
-        case Failure(err) =>
-          throw new IllegalStateException(s"Can't connect to database ${uri.hosts.map(item=>s"${item._1}:${item._2}").mkString(", ")}. $err")
-      }
-      case None => throw new IllegalStateException(s"Can't connect to database $uri.")
-    }
-    MongoDatabaseContext(database)
-  }
 }

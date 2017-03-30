@@ -12,11 +12,15 @@ import io.gatling.core.stats.message.ResponseTimings
 import io.gatling.core.util.NameGen
 import play.api.libs.json._
 import reactivemongo.api.DefaultDB
+import reactivemongo.api.collections.GenericQueryBuilder
+import reactivemongo.play.json.JSONSerializationPack
 
 import scala.util.{Failure, Success, Try}
 
-abstract class MongoAction(database: DefaultDB) extends ExitableAction with MongoLogging with NameGen {
+abstract class MongoAction(database: DefaultDB) extends ExitableAction with NameGen {
+
   def commandName: Expression[String]
+
   def executeCommand(commandName: String, session: Session): Validation[Unit]
 
   override def execute(session: Session): Unit = recover(session) {
@@ -35,42 +39,48 @@ abstract class MongoAction(database: DefaultDB) extends ExitableAction with Mong
     }
   }
 
-  def string2JsObject(optionString: Option[String]): Validation[Option[JsObject]] = {
+  def string2JsObject(optionString: Option[String]): Validation[Option[JsObject]] =
     optionString match {
       case Some(string) => string2JsObject(string).map(Some.apply)
       case None => NoneSuccess
     }
-  }
 
-  protected def executeNext(
-    session:     Session,
-    sent:        Long,
-    received:    Long,
-    status:      Status,
-    next:        Action,
-    requestName: String,
-    message:     Option[String]
-    ) = {
+  protected def executeNext(session: Session,
+                            sent: Long,
+                            received: Long,
+                            status: Status,
+                            next: Action,
+                            requestName: String,
+                            message: Option[String]): Unit = {
     val timings = ResponseTimings(sent, received)
     statsEngine.logResponse(session, requestName, timings, status, None, message)
     next ! session
   }
 
-  protected def processResult(
-    session:     Session,
-    sent:        Long,
-    received:    Long,
-    checks:      List[MongoCheck],
-    response:    MongoResponse,
-    next:        Action,
-    requestName: String
-    ): Unit = {
+  protected def processResult(session: Session,
+                              sent: Long,
+                              received: Long,
+                              checks: List[MongoCheck],
+                              response: MongoResponse,
+                              next: Action,
+                              requestName: String): Unit = {
     // run all the checks, advise the Gatling API that it is complete and move to next
     val (checkSaveUpdate, error) = Check.check(response, session, checks)
     val newSession = checkSaveUpdate(session)
     error match {
       case Some(validation.Failure(errorMessage)) => executeNext(newSession.markAsFailed, sent, received, KO, next, requestName, Some(errorMessage))
-      case _                                      => executeNext(newSession, sent, received, OK, next, requestName, None)
+      case _ => executeNext(newSession, sent, received, OK, next, requestName, None)
+    }
+  }
+
+  implicit class GenericQueryBuilderExt(b: GenericQueryBuilder[JSONSerializationPack.type]) {
+
+    def sort(sort: Option[JsObject]): GenericQueryBuilder[JSONSerializationPack.type] = {
+      sort.map(b.sort).getOrElse(b)
+    }
+
+    def hint(sort: Option[JsObject]): GenericQueryBuilder[JSONSerializationPack.type] = {
+      sort.map(b.hint).getOrElse(b)
     }
   }
 

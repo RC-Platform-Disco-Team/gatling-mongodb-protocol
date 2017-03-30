@@ -16,7 +16,7 @@ import reactivemongo.play.json.collection.JSONCollection
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
-class MongoInsertCommandAction(command: MongoInsertCommand, database: DefaultDB, val statsEngine: StatsEngine, configuration: GatlingConfiguration, val next: Action) extends MongoAction(database) {
+class MongoInsertAction(command: MongoInsertCommand, database: DefaultDB, val statsEngine: StatsEngine, configuration: GatlingConfiguration, val next: Action) extends MongoAction(database) {
 
   override def name: String = genName("Mongo insert command")
 
@@ -27,21 +27,16 @@ class MongoInsertCommandAction(command: MongoInsertCommand, database: DefaultDB,
     resolvedDocument <- command.document(session)
     document <- string2JsObject(resolvedDocument)
   } yield {
-    val collection: JSONCollection = database.collection[JSONCollection](collectionName)
     val sent = nowMillis
-    collection.insert(document).onComplete {
-      case Success(result) => {
-        val received = nowMillis
-        if(result.ok) {
-          processResult(session, sent, received, command.checks, MongoCountResponse(result.n), next, commandName)
+    database.collection[JSONCollection](collectionName).insert(document).onComplete {
+      case Success(result) =>
+        if (result.ok) {
+          processResult(session, sent, nowMillis, command.checks, MongoCountResponse(result.n), next, commandName)
         } else {
-          executeNext(session, sent, received, KO, next, commandName, Some(result.writeErrors.map(we => s"[${we.code}] ${we.errmsg}").mkString(", ")))
+          executeNext(session, sent, nowMillis, KO, next, commandName, Some(result.writeErrors.map(we => s"[${we.code}] ${we.errmsg}").mkString(", ")))
         }
-      }
-      case Failure(err) => {
-        val received = nowMillis
-        executeNext(session, sent, received, KO, next, commandName, Some(err.getMessage))
-      }
+      case Failure(err) =>
+        executeNext(session, sent, nowMillis, KO, next, commandName, Some(err.getMessage))
     }
 
   }
