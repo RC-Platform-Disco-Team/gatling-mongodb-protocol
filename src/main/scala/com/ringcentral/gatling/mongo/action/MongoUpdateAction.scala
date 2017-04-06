@@ -26,11 +26,13 @@ class MongoUpdateAction(command: MongoUpdateCommand, database: DefaultDB, val st
     collectionName <- command.collection(session)
     resolvedSelector <- command.selector(session)
     resolvedModifier <- command.modifier(session)
+    upsert <- command.upsert(session)
+    multi <- command.multi(session)
     selector <- string2JsObject(resolvedSelector)
     modifier <- string2JsObject(resolvedModifier)
   } yield {
     val sent = nowMillis
-    database.collection[JSONCollection](collectionName).update(selector, modifier).onComplete {
+    database.collection[JSONCollection](collectionName).update(selector, modifier, upsert = upsert, multi = multi).onComplete {
       case Success(result) =>
         if (result.ok) {
           processResult(session, sent, nowMillis, command.checks, MongoCountResponse(result.n), next, commandName)

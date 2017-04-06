@@ -50,4 +50,6 @@ case class MongoUpdateCommand(commandName: Expression[String],
                               collection: Expression[String],
                               selector: Expression[String],
                               modifier: Expression[String],
+                              upsert: Expression[Boolean],
+                              multi: Expression[Boolean],
                               checks: List[MongoCheck] = List.empty) extends MongoCommandOnCollection

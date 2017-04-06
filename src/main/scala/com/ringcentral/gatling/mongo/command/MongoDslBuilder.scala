@@ -3,6 +3,7 @@ package com.ringcentral.gatling.mongo.command
 import com.ringcentral.gatling.mongo.check.MongoCheck
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.session.Expression
+import io.gatling.core.session._
 import reactivemongo.api.ReadPreference
 
 //TODO remove Expression
@@ -26,7 +27,7 @@ class MongoCollectionDslBuilder(private val commandName: Expression[String],
 
   def insert(document: Expression[String]) = MongoInsertCommandBuilder(commandName, collection, document)
 
-  def update(selector: Expression[String], modifier: Expression[String]) = MongoUpdateCommandBuilder(commandName, collection, selector, modifier)
+  def update(selector: Expression[String], modifier: Expression[String], upsert: Expression[Boolean] = false.expressionSuccess, multi: Expression[Boolean] = false.expressionSuccess) = MongoUpdateCommandBuilder(commandName, collection, selector, modifier, upsert, multi)
 }
 
 trait MongoCommandBuilder {
@@ -70,9 +71,11 @@ case class MongoRemoveCommandBuilder(private val commandName: Expression[String]
 case class MongoUpdateCommandBuilder(private val commandName: Expression[String],
                                      private val collection: Expression[String],
                                      private val selector: Expression[String],
-                                     private val modifier: Expression[String]) extends MongoCommandBuilder {
+                                     private val modifier: Expression[String],
+                                     private val upsert: Expression[Boolean],
+                                     private val multi: Expression[Boolean]) extends MongoCommandBuilder {
 
-  def build(): MongoCommand = MongoUpdateCommand(commandName, collection, selector, modifier, checks)
+  def build(): MongoCommand = MongoUpdateCommand(commandName, collection, selector, modifier,upsert, multi, checks)
 }
 
 case class MongoCountCommandBuilder(private val commandName: Expression[String],
